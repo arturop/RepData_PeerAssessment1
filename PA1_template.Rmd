@@ -24,8 +24,11 @@ cat("Median of steps: ", median(stepsByDay$steps))
 
 
 ## What is the average daily activity pattern?
-
-
+```{r timeseriesplot}
+stepsByInterval <- aggregate(steps ~ interval, activityDF, FUN=mean)
+plot(stepsByInterval$interval, stepsByInterval$steps, type="l", col="blue", lwd=2, 
+     xlab="Interval", ylab="Average steps")
+```
 
 ## Imputing missing values
 
