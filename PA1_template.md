@@ -1,8 +1,10 @@
-# Reproducible Research: Peer Assessment 1
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
 
-```
-## Warning: package 'knitr' was built under R version 3.1.3
-```
 
 ## Loading and preprocessing the data
 
@@ -17,10 +19,12 @@ stepsByDay <- aggregate(steps ~ date, activityDF, sum)
 hist(stepsByDay$steps, breaks = 25, col="red", xlab="Steps Per Day", main = "Histogram of steps frequency")
 ```
 
-![](PA1_template_files/figure-html/histmeanmedian-1.png) 
+![plot of chunk histmeanmedian](figure/histmeanmedian-1.png) 
 
 ```r
-cat("Mean of steps: ", mean(stepsByDay$steps))
+unadjustedMean <- mean(stepsByDay$steps)
+unadjustedMedian <- median(stepsByDay$steps)
+cat("Mean of steps: ", unadjustedMean)
 ```
 
 ```
@@ -28,7 +32,7 @@ cat("Mean of steps: ", mean(stepsByDay$steps))
 ```
 
 ```r
-cat("Median of steps: ", median(stepsByDay$steps))
+cat("Median of steps: ", unadjustedMedian)
 ```
 
 ```
@@ -44,10 +48,71 @@ plot(stepsByInterval$interval, stepsByInterval$steps, type="l", col="blue", lwd=
      xlab="Interval", ylab="Average steps")
 ```
 
-![](PA1_template_files/figure-html/timeseriesplot-1.png) 
+![plot of chunk timeseriesplot](figure/timeseriesplot-1.png) 
 
 ## Imputing missing values
 
+```r
+cat("Number of rows with missing values: ", nrow(activityDF[is.na(activityDF$steps),]))
+```
 
+```
+## Number of rows with missing values:  2304
+```
+
+```r
+adjustedDF <- (merge(activityDF,stepsByInterval,by="interval"))
+# filling with average per interval
+adjustedDF$steps.x <- ifelse(is.na(adjustedDF$steps.x),adjustedDF$steps.y,adjustedDF$steps.x)
+colnames(adjustedDF) <- c("interval","steps","date","steps2")
+adjustedDF <- adjustedDF[c("interval","date","steps")]
+adjustedStepsByDay <- aggregate(steps ~ date, adjustedDF, sum)
+hist(adjustedStepsByDay$steps, breaks = 25, col="red", xlab="Steps Per Day", main = "Histogram of steps frequency")
+```
+
+![plot of chunk missingvalues](figure/missingvalues-1.png) 
+
+```r
+adjustedMean <- mean(adjustedStepsByDay$steps)
+adjustedMedian <- median(adjustedStepsByDay$steps)
+cat("Mean of steps, adjusted: ", adjustedMean)
+```
+
+```
+## Mean of steps, adjusted:  10766.19
+```
+
+```r
+cat("Median of steps, adjusted: ", adjustedMedian)
+```
+
+```
+## Median of steps, adjusted:  10766.19
+```
+
+```r
+cat("Difference between unadjusted and adjusted mean: ", unadjustedMean - adjustedMean)
+```
+
+```
+## Difference between unadjusted and adjusted mean:  0
+```
+
+```r
+cat("Difference between unadjusted and adjusted median: ", unadjustedMedian - adjustedMedian)
+```
+
+```
+## Difference between unadjusted and adjusted median:  -1.188679
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```r
+adjustedDF$dayType <- as.factor(ifelse(weekdays(as.Date(adjustedDF$date, "%Y-%m-%d")) 
+                               %in% c("Saturday","Sunday"), "weekend", "weekday"))
+library(lattice)
+xyplot(steps ~ interval | factor(dayType), data=adjustedDF, type="l", layout=c(1,2))
+```
+
+![plot of chunk differencesinpatterns](figure/differencesinpatterns-1.png) 

@@ -18,8 +18,10 @@ activityDF <- read.csv("activity.csv")
 ```{r histmeanmedian}
 stepsByDay <- aggregate(steps ~ date, activityDF, sum)
 hist(stepsByDay$steps, breaks = 25, col="red", xlab="Steps Per Day", main = "Histogram of steps frequency")
-cat("Mean of steps: ", mean(stepsByDay$steps))
-cat("Median of steps: ", median(stepsByDay$steps))
+unadjustedMean <- mean(stepsByDay$steps)
+unadjustedMedian <- median(stepsByDay$steps)
+cat("Mean of steps: ", unadjustedMean)
+cat("Median of steps: ", unadjustedMedian)
 ```
 
 
@@ -31,7 +33,27 @@ plot(stepsByInterval$interval, stepsByInterval$steps, type="l", col="blue", lwd=
 ```
 
 ## Imputing missing values
-
-
+```{r missingvalues}
+cat("Number of rows with missing values: ", nrow(activityDF[is.na(activityDF$steps),]))
+adjustedDF <- (merge(activityDF,stepsByInterval,by="interval"))
+# filling with average per interval
+adjustedDF$steps.x <- ifelse(is.na(adjustedDF$steps.x),adjustedDF$steps.y,adjustedDF$steps.x)
+colnames(adjustedDF) <- c("interval","steps","date","steps2")
+adjustedDF <- adjustedDF[c("interval","date","steps")]
+adjustedStepsByDay <- aggregate(steps ~ date, adjustedDF, sum)
+hist(adjustedStepsByDay$steps, breaks = 25, col="red", xlab="Steps Per Day", main = "Histogram of steps frequency")
+adjustedMean <- mean(adjustedStepsByDay$steps)
+adjustedMedian <- median(adjustedStepsByDay$steps)
+cat("Mean of steps, adjusted: ", adjustedMean)
+cat("Median of steps, adjusted: ", adjustedMedian)
+cat("Difference between unadjusted and adjusted mean: ", unadjustedMean - adjustedMean)
+cat("Difference between unadjusted and adjusted median: ", unadjustedMedian - adjustedMedian)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r differencesinpatterns}
+adjustedDF$dayType <- as.factor(ifelse(weekdays(as.Date(adjustedDF$date, "%Y-%m-%d")) 
+                               %in% c("Saturday","Sunday"), "weekend", "weekday"))
+library(lattice)
+xyplot(steps ~ interval | factor(dayType), data=adjustedDF, type="l", layout=c(1,2))
+```
